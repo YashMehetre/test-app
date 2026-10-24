@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test App - Results</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900">
+  <main class="mx-auto max-w-2xl p-4 sm:p-8">
+    <h1 class="mb-6 text-3xl font-bold">Test App - Results</h1>
+    <form id="login" class="mb-6 flex gap-2">
+      <input id="key" type="password" placeholder="Admin key" autocomplete="off"
+        class="flex-1 rounded-lg border border-slate-300 px-3 py-2">
+      <button class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white">Show results</button>
+    </form>
+    <p id="msg" class="mb-4 text-sm text-slate-600"></p>
+    <div id="cards" class="space-y-4"></div>
+  </main>
+  <script src="/results.js"></script>
+</body>
+</html>

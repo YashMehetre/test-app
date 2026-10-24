@@ -1,0 +1,91 @@
+name: Check and deploy
+
+# main only: other branches and pull requests must never touch the live server.
+on:
+  push:
+    branches: [main]
+
+# Two pushes in quick succession must not run two deploys at once (they would race
+# on git pull and npm ci). The second waits; cancel-in-progress is false so a deploy
+# that is already running is never killed halfway through.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+# The workflow only reads the repo. Deploying uses SSH, not the GitHub token.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # npm ci fails if package-lock.json and package.json disagree, which catches a
+      # forgotten lockfile update before it reaches the server.
+      - run: npm ci
+
+      # Syntax-check every server-side file. node --check takes one file at a time,
+      # hence -n1. public/ is browser code and node_modules is not ours.
+      - name: Syntax check server files
+        run: |
+          find . -name '*.js' -not -path './node_modules/*' -not -path './public/*' -print0 \
+            | xargs -0 -n1 node --check
+
+      # --if-present: the project has no tests yet, and that should not fail the build.
+      - run: npm test --if-present
+
+  deploy:
+    needs: check   # a broken commit stops here and is never deployed
+    runs-on: ubuntu-latest
+    # Secrets go through env, not straight into the script text, so their values are
+    # never pasted into the shell command itself.
+    env:
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+    steps:
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # A key pasted into a secret from Windows can carry \r characters, which make
+          # OpenSSH reject it as "invalid format". Strip them, keep a final newline.
+          printf '%s\n' "$VM_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          # ssh refuses private keys that other users can read.
+          chmod 600 ~/.ssh/deploy_key
+          # Derives the public key; fails here, with a clear error, if the secret is not a valid key.
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
+
+      # Records the server's host key so ssh can check it is talking to the same machine
+      # on later steps. Note: it trusts whatever answers at this moment (trust on first use).
+      - name: Trust server host key
+        run: ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      # Pull first, then run deploy.sh: deploy.sh is itself part of the repo, so the
+      # server must have the newest version of it before it is executed.
+      - name: Deploy over SSH
+        run: |
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$VM_USER@$VM_HOST" \
+            "cd ~/test-app && git pull --ff-only && bash ~/test-app/deploy.sh"
+
+      # A restart that succeeded does not prove the app came up. Ask it directly.
+      # Retries because Node plus the database connection takes a few seconds to be ready.
+      - name: Health check
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS --max-time 5 "http://$VM_HOST:3000/api/health"; then
+              echo
+              echo "Healthy after attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i failed, waiting 5 seconds"
+            sleep 5
+          done
+          echo "App never became healthy" >&2
+          exit 1

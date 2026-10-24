@@ -1,0 +1,4 @@
+# Git on Windows may check files out with CRLF line endings. Bash on Linux reads the
+# trailing \r as part of each command ("set: pipefail\r: invalid option"), so shell
+# scripts must always stay LF, whatever the machine that checked them out.
+*.sh text eol=lf
