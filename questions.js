@@ -2,47 +2,39 @@
 // so reordering or editing options after people have voted would change what old votes mean.
 module.exports = [
   {
-    text: 'What is the best first step when asking an AI to build an app?',
+    text: 'How was the pace of today\'s session?',
+    options: ['Too slow', 'Just right', 'A bit fast', 'Far too fast'],
+  },
+  {
+    text: 'Which part of today\'s deployment demo was most useful?',
     options: [
-      'Ask for the whole app in one giant prompt',
-      'Describe the goal, the stack and the constraints, then build in small steps',
-      'Let it pick everything and accept the first answer',
-      'Skip planning and start by deploying',
+      'Setting up the server over SSH',
+      'Pushing code and watching GitHub Actions deploy it',
+      'Secrets and keeping credentials out of the code',
+      'Checking the app is healthy after a deploy',
     ],
   },
   {
-    text: 'The AI wrote code you do not understand. What should you do?',
+    text: 'How confident are you that you could deploy an app on your own now?',
+    options: ['Not at all', 'Slightly', 'Fairly confident', 'Very confident'],
+  },
+  {
+    text: 'Which part was hardest to follow?',
     options: [
-      'Paste it in and hope',
-      'Ask it to explain, then run and test it yourself',
-      'Delete it and start over without asking',
+      'Linux commands and nano',
+      'SSH keys',
+      'The GitHub Actions workflow file',
+      'Nothing, it all made sense',
     ],
   },
   {
-    text: 'Where should a database password live?',
+    text: 'What should the next session focus on?',
     options: [
-      'Hardcoded in the source code',
-      'In a public GitHub README',
-      'In an environment variable that is kept out of git',
-      'In the frontend JavaScript',
-    ],
-  },
-  {
-    text: 'Your app works locally but fails after deploying. What is the most useful first move?',
-    options: [
-      'Read the host\'s logs for the real error message',
-      'Redeploy ten times',
-      'Rewrite the app from scratch',
-      'Blame the AI and stop',
-      'Turn off all error handling',
-    ],
-  },
-  {
-    text: 'Why should you test AI-generated code before shipping it?',
-    options: [
-      'AI code is always wrong',
-      'It can look right and still contain bugs or unsafe shortcuts',
-      'Testing is only for big companies',
+      'More hands-on practice time',
+      'Fixing things when a deploy breaks',
+      'Domain names and HTTPS',
+      'Building more features in the app',
+      'Revision of the basics',
     ],
   },
 ];
